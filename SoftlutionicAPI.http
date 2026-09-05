@@ -1,0 +1,6 @@
+@SoftlutionicAPI_HostAddress = http://localhost:5005
+
+GET {{SoftlutionicAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
