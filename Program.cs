@@ -5,13 +5,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Conexión a Azure SQL mediante Entity Framework
 builder.Services.AddDbContext<SoftlutionicDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AzureSQL")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("AzureSQL")
+    ));
 
 // CORS: permite que la Static Web App llame a la API desde otro dominio
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirSoftlutionic", policy =>
-        policy.WithOrigins("https://happy-field-061ad4010.7.azurestaticapps.net")
+        policy.WithOrigins("https://softlutionic-web-hchvbrbxc3eqarc2.westus-01.azurewebsites.net")
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
