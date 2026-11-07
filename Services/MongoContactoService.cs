@@ -7,11 +7,13 @@ namespace SoftlutionicAPI.Services
 {
     public class MongoContactoService
     {
+        private readonly ContactPushService _push;
         private readonly IMongoCollection<SolicitudContactoMongo> _solicitudes;
         private readonly IMongoCollection<NotificacionMongo> _notificaciones;
 
-        public MongoContactoService(IOptions<MongoDbSettings> settings)
+        public MongoContactoService(IOptions<MongoDbSettings> settings, ContactPushService push)
         {
+            _push = push;
             var client = new MongoClient(settings.Value.ConnectionString);
             var database = client.GetDatabase(settings.Value.DatabaseName);
 
@@ -65,6 +67,9 @@ namespace SoftlutionicAPI.Services
                 filtro,
                 actualizacion
             );
+
+            // Both records are persisted before attempting best-effort push.
+            await _push.NotifyAsync(notificacion.Id);
 
             return solicitud;
         }

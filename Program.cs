@@ -26,6 +26,9 @@ builder.Services.AddCors(options =>
 builder.Services.Configure<MongoDbSettings>(
     builder.Configuration.GetSection("MongoDb"));
 
+builder.Services.AddHttpClient("ContactPush")
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+builder.Services.AddSingleton<ContactPushService>();
 builder.Services.AddSingleton<MongoContactoService>();
 
 builder.Services.AddControllers();

@@ -47,13 +47,34 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: .net-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_345EB86E048142DB97D79612243C8CB9 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_83B6748A7FCF42DE8AFB90EBD7660E8C }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F1F6218FA5174EBFB4FF07F5762AAF7F }}
+
+      - name: Configure contact push bridge
+        shell: pwsh
+        env:
+          CONTACT_PUSH_SECRET: ${{ secrets.CONTACT_PUSH_SECRET }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:CONTACT_PUSH_SECRET.Length -lt 32) { throw 'Missing contact push repository secret.' }
+          $settingsPath = [IO.Path]::GetTempFileName()
+          try {
+            @{
+              'ContactPush__Secret' = $env:CONTACT_PUSH_SECRET
+              'ContactPush__Endpoint' = 'https://softlutionic-sistema-eqh8cjdbbre4fndd.westus-01.azurewebsites.net/api/mobile/v1/push/contact/'
+            } | ConvertTo-Json | Set-Content -LiteralPath $settingsPath -Encoding utf8
+            $group = az webapp list --query "[?name=='softlutionic-api2'].resourceGroup | [0]" --output tsv
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($group)) { throw 'Cannot resolve contact API resource group.' }
+            az webapp config appsettings set --resource-group $group --name softlutionic-api2 --settings "@$settingsPath" --output none
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot configure contact push bridge.' }
+          } finally {
+            Remove-Item -LiteralPath $settingsPath -Force
+          }
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -62,4 +83,4 @@ jobs:
           app-name: 'softlutionic-api2'
           slot-name: 'Production'
           package: .
-          
+
